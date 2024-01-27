@@ -1,0 +1,42 @@
+version: "3"
+
+volumes:
+    anita-postgres-data: {}
+    anita-postgres-data-backups: {}
+    anita-pgadmin-data: {}
+
+services:
+    anita.postgres:
+        container_name: anita-postgres
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+        image: anita-postgres
+        env_file:
+            - ./.env
+        ports:
+            - "${POSTGRES_PUBLIC_HOST}:${POSTGRES_PUBLIC_PORT}:${POSTGRES_PORT}"
+        volumes:
+            - anita-postgres-data:/var/lib/postgresql/data
+            - anita-postgres-data-backups:/backups
+        restart: unless-stopped
+        networks:
+            - anita-network
+    anita.pgadmin:
+        container_name: anita-pgadmin
+        image: dpage/pgadmin4:8
+        env_file:
+            - ./.env
+        ports:
+            - "${PGADMIN_PUBLIC_HOST}:${PGADMIN_PUBLIC_PORT}:${PGADMIN_LISTEN_PORT}"
+        depends_on:
+            - anita.postgres
+        networks:
+            - anita-network
+        volumes:
+            - anita-pgadmin-data:/var/lib/pgadmin
+        restart: unless-stopped
+
+networks:
+    anita-network:
+        external: true
